@@ -1,4 +1,5 @@
 package com.ecommerce.backend.auth;
+import com.ecommerce.backend.security.JwtService;
 import com.ecommerce.backend.user.*;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -7,11 +8,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 public class AuthService {
     private final UserRepository userRepo;
     private final BCryptPasswordEncoder encoder;
+    private final JwtService jwtService;
 
-    public AuthService(UserRepository userRepo,BCryptPasswordEncoder encoder)
+    public AuthService(UserRepository userRepo, BCryptPasswordEncoder encoder, JwtService jwtService)
     {
         this.userRepo = userRepo;
         this.encoder= encoder;
+        this.jwtService = jwtService;
     }
     public User register(User user) {
 
@@ -24,7 +27,7 @@ public class AuthService {
         return userRepo.save(user);
     }
     // LOGIN USER
-    public User login(String email, String password) {
+    public String login(String email, String password) {
 
         User user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -34,6 +37,6 @@ public class AuthService {
             throw new RuntimeException("Invalid credentials");
         }
 
-        return user;
+        return jwtService.generateToken(user.getEmail());
     }
 }
