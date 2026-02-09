@@ -22,4 +22,11 @@ public class ProductController {
     public List<Product> getAll() {
         return productRepo.findAll();
     }
+    @GetMapping("/{id}")
+    public Product getById(@PathVariable Long id)
+    {
+        return productRepo.findById(id)
+                .orElseThrow(()-> new RuntimeException("Product not found"));
+    }
+
 }
