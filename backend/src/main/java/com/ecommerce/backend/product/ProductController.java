@@ -40,8 +40,20 @@ public class ProductController {
         product.setDescription(updatedProduct.getDescription());
         product.setPrice(updatedProduct.getPrice());
         product.setStock(updatedProduct.getStock());
-        product.setActive(updatedProduct.isActive);
-        return productRepo.save(product);
+        product.setActive(updatedProduct.getActive());
+        return productRepo.save(product); //Why not save(updatedProduct) directly? Because:
+//
+//        That can overwrite wrong ID
+//
+//        This ensures safe update (industry practice)
     }
-    )
+    @DeleteMapping("/{id}")
+    public String delete(@PathVariable Long id)
+    {
+        Product product = productRepo.findById(id)
+                .orElseThrow(()-> new RuntimeException("Prodcut not found"));
+        product.setActive(false);
+        productRepo.save(product);
+        return "Prodcut disabled sucessfully";
+    }
 }
