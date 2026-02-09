@@ -28,5 +28,20 @@ public class ProductController {
         return productRepo.findById(id)
                 .orElseThrow(()-> new RuntimeException("Product not found"));
     }
+    @PutMapping("/{id}")
+    public Product update(
+            @PathVariable Long id,
+            @RequestBody Product updatedProduct)
+    {
+        Product product = productRepo.findById(id)
+                .orElseThrow(()-> new RuntimeException("Prodcut not found"));
 
+        product.setName(updatedProduct.getName());
+        product.setDescription(updatedProduct.getDescription());
+        product.setPrice(updatedProduct.getPrice());
+        product.setStock(updatedProduct.getStock());
+        product.setActive(updatedProduct.isActive);
+        return productRepo.save(product);
+    }
+    )
 }
