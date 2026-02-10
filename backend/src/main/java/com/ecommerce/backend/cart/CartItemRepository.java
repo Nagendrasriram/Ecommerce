@@ -1,4 +1,7 @@
 package com.ecommerce.backend.cart;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public class CartItemRepository {
+import java.util.Optional;
+public interface CartItemRepository extends JpaRepository<Cart, Long> {
+    Optional<Cart> findByUserId(Long userId);
 }
