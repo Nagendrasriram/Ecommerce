@@ -8,6 +8,7 @@ public class Cart {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(name = "userid")
     private Long userid;
     private LocalDateTime createdAt = LocalDateTime.now();
 
