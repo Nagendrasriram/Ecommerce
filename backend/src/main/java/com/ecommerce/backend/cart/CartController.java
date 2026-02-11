@@ -1,7 +1,69 @@
+//package com.ecommerce.backend.cart;
+//
+//import org.springframework.web.bind.annotation.*;
+//
+//import java.util.List;
+//
+//@RestController
+//@RequestMapping("/api/cart")
+//public class CartController {
+//
+//    private final CartRepository cartRepo;
+//    private final CartItemRepository cartItemRepo;
+//
+//    public CartController(CartRepository cartRepo, CartItemRepository cartItemRepo) {
+//        this.cartRepo = cartRepo;
+//        this.cartItemRepo = cartItemRepo;
+//    }
+//
+//    // 🔹 View cart
+//    @GetMapping
+//    public List<CartItem> viewCart(@RequestParam Long userid) {
+//
+//        Cart cart = cartRepo.findByUserid(userid)
+//                .orElseGet(() -> {
+//                    Cart newCart = new Cart();
+////                    newCart.setId(userid);
+//                    return cartRepo.save(newCart);
+//                });
+//
+//        return cartItemRepo.findByCartId(cart.getId());
+//    }
+//
+//    // 🔹 Add item to cart
+//    @PostMapping("/add")
+//    public String addToCart(
+//            @RequestParam Long userid,
+//            @RequestParam Long productId,
+//            @RequestParam Integer quantity) {
+//
+//        Cart cart = cartRepo.findByUserid(userid)
+//                .orElseGet(() -> {
+//                    Cart newCart = new Cart();
+////                    newCart.setId(userid);
+//                    return cartRepo.save(newCart);
+//                });
+//
+//        CartItem item = cartItemRepo
+//                .findByCartIdAndProductId(cart.getId(), productId)
+//                .orElse(null);
+//
+//        if (item == null) {
+//            item = new CartItem();
+//            item.setCartId(cart.getId());
+//            item.setProductId(productId);
+//            item.setQuantity(quantity);
+//        } else {
+//            item.setQuantity(item.getQuantity() + quantity);
+//        }
+//
+//        cartItemRepo.save(item);
+//
+//        return "Item added to cart";
+//    }
+//}
 package com.ecommerce.backend.cart;
-
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
@@ -11,19 +73,20 @@ public class CartController {
     private final CartRepository cartRepo;
     private final CartItemRepository cartItemRepo;
 
-    public CartController(CartRepository cartRepo, CartItemRepository cartItemRepo) {
+    public CartController(CartRepository cartRepo,
+                          CartItemRepository cartItemRepo) {
         this.cartRepo = cartRepo;
         this.cartItemRepo = cartItemRepo;
     }
 
     // 🔹 View cart
     @GetMapping
-    public List<CartItem> viewCart(@RequestParam Long userId) {
+    public List<CartItem> viewCart(@RequestParam Long userid) {
 
-        Cart cart = cartRepo.findByUserId(userId)
+        Cart cart = cartRepo.findByUserid(userid)
                 .orElseGet(() -> {
                     Cart newCart = new Cart();
-                    newCart.setId(userId);
+                    newCart.setUserid(userid);  // 🔥 IMPORTANT
                     return cartRepo.save(newCart);
                 });
 
@@ -33,14 +96,14 @@ public class CartController {
     // 🔹 Add item to cart
     @PostMapping("/add")
     public String addToCart(
-            @RequestParam Long userId,
+            @RequestParam Long userid,
             @RequestParam Long productId,
             @RequestParam Integer quantity) {
 
-        Cart cart = cartRepo.findByUserId(userId)
+        Cart cart = cartRepo.findByUserid(userid)
                 .orElseGet(() -> {
                     Cart newCart = new Cart();
-                    newCart.setId(userId);
+                    newCart.setUserid(userid);   // 🔥 IMPORTANT
                     return cartRepo.save(newCart);
                 });
 
@@ -59,6 +122,6 @@ public class CartController {
 
         cartItemRepo.save(item);
 
-        return "Item added to cart";
+        return "Item added to cart successfully";
     }
 }
