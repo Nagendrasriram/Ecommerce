@@ -63,20 +63,24 @@
 //    }
 //}
 package com.ecommerce.backend.cart;
+import com.ecommerce.backend.product.Product;
+import com.ecommerce.backend.product.ProductRepository;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/cart")
 public class CartController {
-
+    private final ProductRepository productRepo;
     private final CartRepository cartRepo;
     private final CartItemRepository cartItemRepo;
 
     public CartController(CartRepository cartRepo,
-                          CartItemRepository cartItemRepo) {
+                          CartItemRepository cartItemRepo,
+                          ProductRepository productRepo) {
         this.cartRepo = cartRepo;
         this.cartItemRepo = cartItemRepo;
+        this.productRepo = productRepo;
     }
 
     // 🔹 View cart
@@ -100,13 +104,27 @@ public class CartController {
             @RequestParam Long productId,
             @RequestParam Integer quantity) {
 
+        // 🔥 1. Validate product
+        Product product = productRepo.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        if (!product.getActive()) {
+            throw new RuntimeException("Product is inactive");
+        }
+
+        if (product.getStock() < quantity) {
+            throw new RuntimeException("Not enough stock available");
+        }
+
+        // 🔥 2. Get or create cart
         Cart cart = cartRepo.findByUserid(userid)
                 .orElseGet(() -> {
                     Cart newCart = new Cart();
-                    newCart.setUserid(userid);   // 🔥 IMPORTANT
+                    newCart.setUserid(userid);
                     return cartRepo.save(newCart);
                 });
 
+        // 🔥 3. Add or update cart item
         CartItem item = cartItemRepo
                 .findByCartIdAndProductId(cart.getId(), productId)
                 .orElse(null);
@@ -124,4 +142,25 @@ public class CartController {
 
         return "Item added to cart successfully";
     }
+
+    @GetMapping("/total")
+    public Double getCartTotal(@RequestParam Long userid) {
+
+        Cart cart = cartRepo.findByUserid(userid)
+                .orElseThrow(() -> new RuntimeException("Cart not found"));
+
+        List<CartItem> items = cartItemRepo.findByCartId(cart.getId());
+
+        double total = 0;
+
+        for (CartItem item : items) {
+            Product product = productRepo.findById(item.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Product not found"));
+
+            total += product.getPrice().doubleValue() * item.getQuantity();
+        }
+
+        return total;
+    }
+
 }
