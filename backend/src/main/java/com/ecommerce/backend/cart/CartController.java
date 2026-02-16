@@ -67,6 +67,9 @@ import com.ecommerce.backend.product.Product;
 import com.ecommerce.backend.product.ProductRepository;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import org.springframework.http.ResponseEntity;
+import java.util.Map;
+
 
 @RestController
 @RequestMapping("/api/cart")
@@ -99,11 +102,10 @@ public class CartController {
 
     // 🔹 Add item to cart
     @PostMapping("/add")
-    public String addToCart(
+    public ResponseEntity<Map<String, Object>> addToCart(
             @RequestParam Long userid,
             @RequestParam Long productId,
             @RequestParam Integer quantity) {
-
         // 🔥 1. Validate product
         Product product = productRepo.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
@@ -140,7 +142,13 @@ public class CartController {
 
         cartItemRepo.save(item);
 
-        return "Item added to cart successfully";
+        return ResponseEntity.ok(
+                Map.of(
+                        "message", "Item added to cart successfully",
+                        "productId", productId,
+                        "quantity", item.getQuantity()
+                )
+        );
     }
 
     @GetMapping("/total")
