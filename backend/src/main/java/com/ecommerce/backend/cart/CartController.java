@@ -1,112 +1,52 @@
-//package com.ecommerce.backend.cart;
-//
-//import org.springframework.web.bind.annotation.*;
-//
-//import java.util.List;
-//
-//@RestController
-//@RequestMapping("/api/cart")
-//public class CartController {
-//
-//    private final CartRepository cartRepo;
-//    private final CartItemRepository cartItemRepo;
-//
-//    public CartController(CartRepository cartRepo, CartItemRepository cartItemRepo) {
-//        this.cartRepo = cartRepo;
-//        this.cartItemRepo = cartItemRepo;
-//    }
-//
-//    // 🔹 View cart
-//    @GetMapping
-//    public List<CartItem> viewCart(@RequestParam Long userid) {
-//
-//        Cart cart = cartRepo.findByUserid(userid)
-//                .orElseGet(() -> {
-//                    Cart newCart = new Cart();
-////                    newCart.setId(userid);
-//                    return cartRepo.save(newCart);
-//                });
-//
-//        return cartItemRepo.findByCartId(cart.getId());
-//    }
-//
-//    // 🔹 Add item to cart
-//    @PostMapping("/add")
-//    public String addToCart(
-//            @RequestParam Long userid,
-//            @RequestParam Long productId,
-//            @RequestParam Integer quantity) {
-//
-//        Cart cart = cartRepo.findByUserid(userid)
-//                .orElseGet(() -> {
-//                    Cart newCart = new Cart();
-////                    newCart.setId(userid);
-//                    return cartRepo.save(newCart);
-//                });
-//
-//        CartItem item = cartItemRepo
-//                .findByCartIdAndProductId(cart.getId(), productId)
-//                .orElse(null);
-//
-//        if (item == null) {
-//            item = new CartItem();
-//            item.setCartId(cart.getId());
-//            item.setProductId(productId);
-//            item.setQuantity(quantity);
-//        } else {
-//            item.setQuantity(item.getQuantity() + quantity);
-//        }
-//
-//        cartItemRepo.save(item);
-//
-//        return "Item added to cart";
-//    }
-//}
 package com.ecommerce.backend.cart;
+
 import com.ecommerce.backend.product.Product;
 import com.ecommerce.backend.product.ProductRepository;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 import org.springframework.http.ResponseEntity;
-import java.util.Map;
 
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/cart")
 public class CartController {
+
     private final ProductRepository productRepo;
     private final CartRepository cartRepo;
     private final CartItemRepository cartItemRepo;
 
-    public CartController(CartRepository cartRepo,
-                          CartItemRepository cartItemRepo,
-                          ProductRepository productRepo) {
+    public CartController(
+            CartRepository cartRepo,
+            CartItemRepository cartItemRepo,
+            ProductRepository productRepo
+    ) {
         this.cartRepo = cartRepo;
         this.cartItemRepo = cartItemRepo;
         this.productRepo = productRepo;
     }
 
-    // 🔹 View cart
+    // ✅ View Cart
     @GetMapping
     public List<CartItem> viewCart(@RequestParam Long userid) {
 
         Cart cart = cartRepo.findByUserid(userid)
                 .orElseGet(() -> {
                     Cart newCart = new Cart();
-                    newCart.setUserid(userid);  // 🔥 IMPORTANT
+                    newCart.setUserid(userid);
                     return cartRepo.save(newCart);
                 });
 
         return cartItemRepo.findByCartId(cart.getId());
     }
 
-    // 🔹 Add item to cart
+    // ✅ Add Item to Cart
     @PostMapping("/add")
     public ResponseEntity<Map<String, Object>> addToCart(
             @RequestParam Long userid,
             @RequestParam Long productId,
-            @RequestParam Integer quantity) {
-        // 🔥 1. Validate product
+            @RequestParam Integer quantity
+    ) {
         Product product = productRepo.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
@@ -118,7 +58,6 @@ public class CartController {
             throw new RuntimeException("Not enough stock available");
         }
 
-        // 🔥 2. Get or create cart
         Cart cart = cartRepo.findByUserid(userid)
                 .orElseGet(() -> {
                     Cart newCart = new Cart();
@@ -126,7 +65,6 @@ public class CartController {
                     return cartRepo.save(newCart);
                 });
 
-        // 🔥 3. Add or update cart item
         CartItem item = cartItemRepo
                 .findByCartIdAndProductId(cart.getId(), productId)
                 .orElse(null);
@@ -151,6 +89,7 @@ public class CartController {
         );
     }
 
+    // ✅ Cart Total
     @GetMapping("/total")
     public Double getCartTotal(@RequestParam Long userid) {
 
@@ -160,15 +99,12 @@ public class CartController {
         List<CartItem> items = cartItemRepo.findByCartId(cart.getId());
 
         double total = 0;
-
         for (CartItem item : items) {
             Product product = productRepo.findById(item.getProductId())
                     .orElseThrow(() -> new RuntimeException("Product not found"));
 
             total += product.getPrice().doubleValue() * item.getQuantity();
         }
-
         return total;
     }
-
 }

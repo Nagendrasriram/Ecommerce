@@ -1,8 +1,8 @@
 package com.ecommerce.backend.order;
 
-import com.ecommerce.backend.cart.CartItem;
-import com.ecommerce.backend.cart.CartItemRepository;
-import com.ecommerce.backend.cart.CartRepository;
+import com.ecommerce.backend.cart.*;
+import com.ecommerce.backend.product.Product;
+import com.ecommerce.backend.product.ProductRepository;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,24 +12,30 @@ import java.util.List;
 public class OrderController {
 
     private final OrderRepository orderRepo;
+    private final OrderItemRepository orderItemRepo;
     private final CartRepository cartRepo;
-    private final CartItemRepository cartItemRepo;   // ✅ FIXED TYPE
+    private final CartItemRepository cartItemRepo;
+    private final ProductRepository productRepo;
 
     public OrderController(
             OrderRepository orderRepo,
+            OrderItemRepository orderItemRepo,
             CartRepository cartRepo,
-            CartItemRepository cartItemRepo   // ✅ FIXED TYPE
+            CartItemRepository cartItemRepo,
+            ProductRepository productRepo
     ) {
         this.orderRepo = orderRepo;
+        this.orderItemRepo = orderItemRepo;
         this.cartRepo = cartRepo;
         this.cartItemRepo = cartItemRepo;
+        this.productRepo = productRepo;
     }
 
-    // ✅ Place Order
+    // ✅ PLACE ORDER
     @PostMapping("/place")
     public String placeOrder(@RequestParam Long userid) {
 
-        var cart = cartRepo.findByUserid(userid)
+        Cart cart = cartRepo.findByUserid(userid)
                 .orElseThrow(() -> new RuntimeException("Cart not found"));
 
         List<CartItem> items = cartItemRepo.findByCartId(cart.getId());
@@ -38,25 +44,45 @@ public class OrderController {
             return "Cart is empty";
         }
 
-        double total = items.stream()
-                .mapToDouble(i -> i.getQuantity() * 1000) // temp price logic
-                .sum();
-
         Order order = new Order();
         order.setUserid(userid);
-        order.setTotalAmount(total);
+        order = orderRepo.save(order);
 
+        double total = 0;
+
+        for (CartItem item : items) {
+            Product product = productRepo.findById(item.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Product not found"));
+
+            double price = product.getPrice().doubleValue();
+            total += price * item.getQuantity();
+
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrderId(order.getId());
+            orderItem.setProductId(product.getId());
+            orderItem.setQuantity(item.getQuantity());
+            orderItem.setPrice(price);
+
+            orderItemRepo.save(orderItem);
+        }
+
+        order.setTotalAmount(total);
         orderRepo.save(order);
 
-        // clear cart
         cartItemRepo.deleteAll(items);
 
         return "Order placed successfully";
     }
 
-    // ✅ View Orders
+    // ✅ VIEW ORDERS
     @GetMapping
     public List<Order> getOrders(@RequestParam Long userid) {
         return orderRepo.findByUserid(userid);
+    }
+
+    // ✅ VIEW ORDER ITEMS
+    @GetMapping("/{orderId}/items")
+    public List<OrderItem> getOrderItems(@PathVariable Long orderId) {
+        return orderItemRepo.findByOrderId(orderId);
     }
 }
