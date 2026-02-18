@@ -247,5 +247,24 @@ public class CartController {
         return ResponseEntity.ok(
                 new ApiResponse<>(true, "Cart total calculated", total)
         );
+
+    }
+    @DeleteMapping("/remove")
+    public ResponseEntity<ApiResponse<String>> removeFromCart(
+            @RequestParam Long userid,
+            @RequestParam Long productId
+    ) {
+        Cart cart = cartRepo.findByUserid(userid)
+                .orElseThrow(() -> new RuntimeException("Cart not found"));
+
+        CartItem item = cartItemRepo
+                .findByCartIdAndProductId(cart.getId(), productId)
+                .orElseThrow(() -> new RuntimeException("Item not in cart"));
+
+        cartItemRepo.delete(item);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Item removed from cart", null)
+        );
     }
 }
