@@ -250,6 +250,44 @@ public class CartController {
         );
 
     }
+    @PostMapping("/remove")
+    public ApiResponse<Object> remove(
+            @RequestParam Long userid,
+            @RequestParam Long productId) {
+
+        Cart cart = cartRepo.findByUserid(userid)
+                .orElseThrow(() -> new RuntimeException("Cart not found"));
+
+        CartItem item = cartItemRepo
+                .findByCartIdAndProductId(cart.getId(), productId)
+                .orElseThrow(() -> new RuntimeException("Item not found"));
+
+        cartItemRepo.delete(item);
+
+        return new ApiResponse<>(true, "Item removed", null);
+    }
+    @PostMapping("/decrease")
+    public ApiResponse<CartItem> decrease(
+            @RequestParam Long userid,
+            @RequestParam Long productId) {
+
+        Cart cart = cartRepo.findByUserid(userid)
+                .orElseThrow(() -> new RuntimeException("Cart not found"));
+
+        CartItem item = cartItemRepo
+                .findByCartIdAndProductId(cart.getId(), productId)
+                .orElseThrow(() -> new RuntimeException("Item not found"));
+
+        item.setQuantity(item.getQuantity() - 1);
+
+        if (item.getQuantity() <= 0) {
+            cartItemRepo.delete(item);
+            return new ApiResponse<>(true, "Item removed", null);
+        }
+
+        cartItemRepo.save(item);
+        return new ApiResponse<>(true, "Quantity decreased", item);
+    }
     @DeleteMapping("/remove")
     public ResponseEntity<ApiResponse<String>> removeFromCart(
             @RequestParam Long userid,
